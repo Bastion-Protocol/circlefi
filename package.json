@@ -1,0 +1,43 @@
+{
+  "name": "@bastion-protocol/circlefi",
+  "version": "1.0.0",
+  "description": "CircleFi - Decentralized Lending Circles with Domain Collateral",
+  "main": "index.js",
+  "scripts": {
+    "build": "hardhat compile && npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "hardhat test",
+    "test:property": "hardhat test test/*.property.test.js",
+    "test:fuzz": "echidna-test contracts/test/",
+    "dev": "concurrently \"npm run dev:contracts\" \"npm run dev:frontend\"",
+    "dev:contracts": "hardhat node",
+    "dev:frontend": "cd frontend && npm run dev",
+    "deploy:fuji": "hardhat run scripts/deploy.js --network fuji",
+    "setup:pools": "hardhat run scripts/setup-pools.js",
+    "lint": "solhint 'contracts/**/*.sol' && cd frontend && npm run lint"
+  },
+  "keywords": [
+    "defi",
+    "lending",
+    "circles",
+    "domain",
+    "collateral"
+  ],
+  "author": "Bastion Protocol",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "concurrently": "^8.2.2",
+    "hardhat": "^2.19.0",
+    "solhint": "^4.0.0"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.8.0",
+    "@openzeppelin/contracts": "^4.9.0",
+    "dotenv": "^16.3.1"
+  },
+  "workspaces": [
+    "frontend",
+    "subgraph"
+  ]
+}

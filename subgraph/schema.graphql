@@ -1,0 +1,76 @@
+type Circle @entity {
+  id: ID!
+  members: [User!]!
+  poolAmount: BigInt!
+  currentBorrower: BigInt!
+  cycleLength: BigInt!
+  startTime: BigInt!
+  isActive: Boolean!
+  loans: [Loan!]! @derivedFrom(field: "circle")
+  totalBorrowed: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type User @entity {
+  id: ID! # address
+  circles: [Circle!]!
+  loans: [Loan!]! @derivedFrom(field: "borrower")
+  deposits: [Deposit!]! @derivedFrom(field: "user")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "user")
+  totalDeposited: BigInt!
+  totalWithdrawn: BigInt!
+  totalBorrowed: BigInt!
+  totalRepaid: BigInt!
+  activeLoans: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Loan @entity {
+  id: ID! # loanId
+  borrower: User!
+  circle: Circle!
+  amount: BigInt!
+  collateralValue: BigInt!
+  domainCollateral: String!
+  interestRate: BigInt!
+  startTime: BigInt!
+  dueTime: BigInt!
+  isActive: Boolean!
+  isLiquidated: Boolean!
+  repaidAmount: BigInt
+  liquidatedBy: User
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Deposit @entity {
+  id: ID! # txHash-logIndex
+  user: User!
+  amount: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type Withdrawal @entity {
+  id: ID! # txHash-logIndex
+  user: User!
+  amount: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProtocolStats @entity {
+  id: ID! # "protocol"
+  totalSupply: BigInt!
+  totalBorrowed: BigInt!
+  totalCircles: BigInt!
+  totalLoans: BigInt!
+  totalUsers: BigInt!
+  utilizationRate: BigInt!
+  currentInterestRate: BigInt!
+  updatedAt: BigInt!
+}
