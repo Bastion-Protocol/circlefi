@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "./CircleFiPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title YellowIntegration
@@ -43,7 +43,7 @@ contract YellowIntegration is Ownable, ReentrancyGuard {
     event StateChannelOpened(address indexed user, bytes32 channelId, uint256 initialBalance);
     event StateChannelClosed(address indexed user, bytes32 channelId, uint256 finalBalance);
 
-    constructor(address _pool) {
+    constructor(address _pool) Ownable(msg.sender) {
         pool = CircleFiPool(_pool);
         _updateRates();
     }

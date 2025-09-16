@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Mock USDC token for testing purposes
  */
 contract MockUSDC is ERC20, Ownable {
-    constructor() ERC20("USD Coin", "USDC") {
+    constructor() ERC20("USD Coin", "USDC") Ownable(msg.sender) {
         _mint(msg.sender, 1000000 * 10**6); // 1M USDC for testing
     }
 

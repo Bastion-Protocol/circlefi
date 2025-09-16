@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -60,7 +60,7 @@ contract CircleFiPool is ReentrancyGuard, Ownable {
     event CircleCreated(uint256 indexed circleId, address indexed creator, string name);
     event CircleMemberAdded(uint256 indexed circleId, address indexed member);
 
-    constructor(address _usdc) {
+    constructor(address _usdc) Ownable(msg.sender) {
         USDC = IERC20(_usdc);
         liquidityIndex = INTEREST_RATE_BASE;
         variableBorrowIndex = INTEREST_RATE_BASE;

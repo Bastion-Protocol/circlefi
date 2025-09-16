@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title DOMACollateral
@@ -37,7 +38,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     event DomainUsedAsCollateral(uint256 indexed tokenId, address indexed borrower, uint256 loanAmount);
     event CollateralReleased(uint256 indexed tokenId);
 
-    constructor() ERC721("DOMA Domain Collateral", "DOMA") {
+    constructor() ERC721("DOMA Domain Collateral", "DOMA") Ownable(msg.sender) {
         _nextTokenId = 1;
     }
 
@@ -78,7 +79,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
      */
     function updateDomainValue(uint256 tokenId, uint256 newValue) external {
         require(valuationOracles[msg.sender], "Not authorized oracle");
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         require(newValue >= MIN_DOMAIN_VALUE, "Value below minimum");
         require(!domains[tokenId].isCollateral, "Cannot update collateral domain");
 
@@ -96,7 +97,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         address borrower,
         uint256 loanAmount
     ) external onlyOwner {
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         require(!domains[tokenId].isCollateral, "Already used as collateral");
         require(isValidCollateral(tokenId), "Valuation too old");
         require(
@@ -115,7 +116,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
      * @dev Release domain from collateral
      */
     function releaseCollateral(uint256 tokenId) external onlyOwner {
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         require(domains[tokenId].isCollateral, "Not used as collateral");
 
         domains[tokenId].isCollateral = false;
@@ -129,7 +130,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
      * @dev Check if domain valuation is still valid
      */
     function isValidCollateral(uint256 tokenId) public view returns (bool) {
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         return block.timestamp - domains[tokenId].lastValuation <= VALUATION_VALIDITY_PERIOD;
     }
 
@@ -137,7 +138,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
      * @dev Get maximum loan amount for a domain
      */
     function getMaxLoanAmount(uint256 tokenId) public view returns (uint256) {
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         return (domains[tokenId].value * MAX_LTV) / 100;
     }
 
@@ -145,7 +146,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
      * @dev Get current loan-to-value ratio
      */
     function getCurrentLTV(uint256 tokenId) public view returns (uint256) {
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         if (!domains[tokenId].isCollateral || domains[tokenId].value == 0) {
             return 0;
         }
@@ -199,17 +200,13 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     // Override required functions
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,
-        uint256 batchSize
-    ) internal override(ERC721, ERC721Enumerable) {
+    function _update(address to, uint256 tokenId, address auth) internal override(ERC721, ERC721Enumerable) returns (address) {
         require(!domains[tokenId].isCollateral, "Cannot transfer collateral domain");
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+        
+        address from = _ownerOf(tokenId);
         
         // Update user domains mapping
-        if (from != address(0) && to != address(0)) {
+        if (from != address(0) && to != address(0) && from != to) {
             // Remove from previous owner
             uint256[] storage fromDomains = userDomains[from];
             for (uint256 i = 0; i < fromDomains.length; i++) {
@@ -223,6 +220,12 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
             // Add to new owner
             userDomains[to].push(tokenId);
         }
+        
+        return super._update(to, tokenId, auth);
+    }
+
+    function _increaseBalance(address account, uint128 value) internal override(ERC721, ERC721Enumerable) {
+        super._increaseBalance(account, value);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -235,7 +238,7 @@ contract DOMACollateral is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "Domain does not exist");
+        require(_ownerOf(tokenId) != address(0), "Domain does not exist");
         
         // Simple metadata for MVP - in production this would return proper JSON metadata
         return string(abi.encodePacked(
