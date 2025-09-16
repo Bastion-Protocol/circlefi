@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 // import { useAccount, useContractRead, useContractWrite } from 'wagmi'
 // import { parseUnits, formatUnits } from 'viem'
-import { CONTRACT_ADDRESSES } from '@/lib/constants'
+// import { CONTRACT_ADDRESSES } from '@/lib/constants'
 
 // Simplified mock hook for MVP demo
 export function useCircleFiPool() {
